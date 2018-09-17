@@ -2,3 +2,6 @@ gym
 atari_py>=0.1.1
 Pillow
 PyOpenGL
+scikit-image
+keras
+tensorflow
