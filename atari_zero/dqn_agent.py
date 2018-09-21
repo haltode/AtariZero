@@ -1,3 +1,5 @@
+import random
+
 import keras
 import numpy as np
 
@@ -6,6 +8,14 @@ class DQNAgent:
     def __init__(self):
         self.state_size = (84, 84, 4)
         self.action_size = 3
+
+        self.init_epsilon = 1.0
+        self.final_epsilon = 0.1
+        self.nb_exploration_steps = 1000000
+        self.epsilon_decay = (self.init_epsilon - self.final_epsilon) \
+                             / self.nb_exploration_steps
+
+        self.epsilon = self.init_epsilon
 
         self.build_atari_model()
 
@@ -55,3 +65,12 @@ class DQNAgent:
             training_data, target_data,
             nb_epoch=1, batch_size=len(start_states), verbose=0
         )
+
+    def choose_action(self, history):
+        history = np.float32(history / 255.0)
+        # epsilon greedy exploration
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)
+        else:
+            q_value = self.model.predict(history)
+            return np.argmax(q_value[0])
