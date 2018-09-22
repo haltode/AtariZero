@@ -68,8 +68,8 @@ class DQNAgent:
         training_data = [start_states, actions]
         target_data = actions * Q_values[:, None]
         self.model.fit(
-            training_data, target_data,
-            nb_epoch=1, batch_size=len(start_states), verbose=0
+            training_data, target_data, epochs=1,
+            batch_size=len(start_states), verbose=0
         )
 
     def choose_action(self, history):
