@@ -12,8 +12,8 @@ class DQNAgent:
         self.init_epsilon = 1.0
         self.final_epsilon = 0.1
         self.nb_exploration_steps = 1000000
-        self.epsilon_decay = (self.init_epsilon - self.final_epsilon) \
-                             / self.nb_exploration_steps
+        self.epsilon_decay = ((self.init_epsilon - self.final_epsilon)
+                              / self.nb_exploration_steps)
 
         self.epsilon = self.init_epsilon
 
