@@ -1,3 +1,4 @@
+import collections
 import random
 
 import keras
@@ -16,6 +17,11 @@ class DQNAgent:
                               / self.nb_exploration_steps)
 
         self.epsilon = self.init_epsilon
+
+        self.memory = collections.deque(maxlen=400000)
+        self.batch_size = 32
+        self.discount_rate = 0.99
+        self.replay_start_size = 50000
 
         self.build_atari_model()
 
@@ -67,10 +73,50 @@ class DQNAgent:
         )
 
     def choose_action(self, history):
-        history = np.float32(history / 255.0)
+        history = np.float32(history / 255.)
         # epsilon greedy exploration
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         else:
             q_value = self.model.predict(history)
             return np.argmax(q_value[0])
+
+    def save_to_memory(self, history, action, reward, next_history, terminal):
+        self.memory.append((history, action, reward, next_history, terminal))
+
+    def train_replay(self):
+        if len(self.memory) < self.replay_start_size:
+            return
+        if self.epsilon > self.final_epsilon:
+            self.epsilon -= self.epsilon_decay
+
+        mini_batch = random.sample(self.memory, self.batch_size)
+
+        history = np.zeros((self.batch_size, self.state_size[0],
+                            self.state_size[1], self.state_size[2]))
+        next_history = np.zeros((self.batch_size, self.state_size[0],
+                                 self.state_size[1], self.state_size[2]))
+        action, reward, terminal = [], [], []
+        target = np.zeros((self.batch_size,))
+
+        for i in range(self.batch_size):
+            history[i] = np.float32(mini_batch[i][0] / 255.)
+            next_history[i] = np.float32(mini_batch[i][3] / 255.)
+            action.append(mini_batch[i][1])
+            reward.append(mini_batch[i][2])
+            terminal.append(mini_batch[i][4])
+
+        target_value = self.target_model.predict(next_history)
+
+        for i in range(self.batch_size):
+            target[i] = reward[i]
+            if not terminal[i]:
+                target[i] += self.discount_rate * np.amax(target_value[i])
+
+        action_one_hot = np.eye(self.action_size)[np.array(action).reshape(-1)]
+        training_data = [history, action_one_hot]
+        target_data = action_one_hot * target[:, None]
+        self.model.fit(
+            training_data, target_data, epochs=1,
+            batch_size=self.batch_size, verbose=0
+        )
