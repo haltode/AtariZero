@@ -22,6 +22,7 @@ class DQNAgent:
         self.batch_size = 32
         self.discount_rate = 0.99
         self.replay_start_size = 50000
+        self.no_op_max_steps = 30
 
         self.build_atari_model()
 
