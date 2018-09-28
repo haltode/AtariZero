@@ -5,10 +5,8 @@ import numpy as np
 import skimage.color
 import skimage.transform
 
+from atari_games import Breakout
 from dqn_agent import DQNAgent
-
-
-GAME_NAME = 'BreakoutDeterministic-v4'
 
 
 def preprocess_frame(frame):
@@ -20,27 +18,13 @@ def preprocess_frame(frame):
     return compact_frame
 
 
-def translate_to_game_action(action):
-    if 'Breakout' in GAME_NAME:
-        if action == 0:
-            return 1
-        elif action == 1:
-            return 2
-        else:
-            return 3
-
-
-def starting_situation():
-    if 'Breakout' in GAME_NAME:
-        return 0, 5
-
-
-env = gym.make(GAME_NAME)
+game = Breakout()
+env = gym.make(game.env_name)
 agent = DQNAgent()
 
 for _ in range(agent.nb_episodes):
     done, terminal = False, False
-    score, lives = starting_situation()
+    score, lives = game.start_score, game.start_lives
     observation = env.reset()
 
     # To avoid sub-optimal, start the episode by doing nothing for a few steps
@@ -56,7 +40,7 @@ for _ in range(agent.nb_episodes):
     while not done:
         # Play action
         action = agent.choose_action(history)
-        game_action = translate_to_game_action(action)
+        game_action = game.get_ingame_action(action)
         observation, reward, done, info = env.step(game_action)
 
         # Update history
