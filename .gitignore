@@ -1,2 +1,6 @@
+# AtariZero models
+saved_models/
+
+# Python related
 __pycache__/
 venv/
