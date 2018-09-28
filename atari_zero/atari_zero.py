@@ -1,3 +1,4 @@
+import argparse
 import random
 
 import gym
@@ -18,50 +19,71 @@ def preprocess_frame(frame):
     return compact_frame
 
 
+def train(game):
+    env = gym.make(game.env_name)
+    agent = DQNAgent()
+
+    for _ in range(agent.nb_episodes):
+        done, terminal = False, False
+        score, lives = game.start_score, game.start_lives
+        observation = env.reset()
+
+        # To avoid sub-optimal, start the episode by waiting for a few steps
+        nb_no_op = random.randint(1, agent.no_op_max_steps)
+        for _ in range(nb_no_op):
+            observation, _, _, _ = env.step(1)
+
+        # Initial history
+        state = preprocess_frame(observation)
+        history = np.stack((state, state, state, state), axis=2)
+        history = np.reshape([history], (1, 84, 84, 4))
+
+        while not done:
+            # Play action
+            action = agent.choose_action(history)
+            game_action = game.get_ingame_action(action)
+            observation, reward, done, info = env.step(game_action)
+
+            # Update history
+            next_state = preprocess_frame(observation)
+            next_state = np.reshape([next_state], (1, 84, 84, 1))
+            next_history = np.append(next_state, history[:, :, :, :3], axis=3)
+
+            # Lost a life
+            if lives > info['ale.lives']:
+                terminal = True
+                lives = info['ale.lives']
+
+            reward = np.clip(reward, -1., 1.)
+            score += reward
+
+            # Learn
+            agent.save_to_memory(history, action, reward, next_history, terminal)
+            agent.train_replay()
+
+            # Prepare for next iteration
+            if terminal:
+                terminal = False
+            else:
+                history = next_history
+
+
+def play(game, model_path):
+    print(model_path)
+    pass
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--train", action="store_true",
+                    help="train the agent to play the game")
+parser.add_argument("-p", "--play", type=str, metavar="MODEL_FILE",
+                    help="load agent model file to play the game")
+args = parser.parse_args()
+
 game = Breakout()
-env = gym.make(game.env_name)
-agent = DQNAgent()
-
-for _ in range(agent.nb_episodes):
-    done, terminal = False, False
-    score, lives = game.start_score, game.start_lives
-    observation = env.reset()
-
-    # To avoid sub-optimal, start the episode by doing nothing for a few steps
-    nb_no_op = random.randint(1, agent.no_op_max_steps)
-    for _ in range(nb_no_op):
-        observation, _, _, _ = env.step(1)
-
-    # Initial history
-    state = preprocess_frame(observation)
-    history = np.stack((state, state, state, state), axis=2)
-    history = np.reshape([history], (1, 84, 84, 4))
-
-    while not done:
-        # Play action
-        action = agent.choose_action(history)
-        game_action = game.get_ingame_action(action)
-        observation, reward, done, info = env.step(game_action)
-
-        # Update history
-        next_state = preprocess_frame(observation)
-        next_state = np.reshape([next_state], (1, 84, 84, 1))
-        next_history = np.append(next_state, history[:, :, :, :3], axis=3)
-
-        # Lost a life
-        if lives > info['ale.lives']:
-            terminal = True
-            lives = info['ale.lives']
-
-        reward = np.clip(reward, -1., 1.)
-        score += reward
-
-        # Learn
-        agent.save_to_memory(history, action, reward, next_history, terminal)
-        agent.train_replay()
-
-        # Prepare for next iteration
-        if terminal:
-            terminal = False
-        else:
-            history = next_history
+if args.train:
+    train(game)
+elif args.play:
+    play(game, args.play)
+else:
+    parser.print_help()
