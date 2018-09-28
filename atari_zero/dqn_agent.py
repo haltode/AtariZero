@@ -9,6 +9,7 @@ class DQNAgent:
     def __init__(self):
         self.state_size = (84, 84, 4)
         self.action_size = 3
+        self.nb_episodes = 50000
 
         self.init_epsilon = 1.0
         self.final_epsilon = 0.1

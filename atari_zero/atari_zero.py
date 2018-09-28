@@ -8,7 +8,6 @@ import skimage.transform
 from dqn_agent import DQNAgent
 
 
-NB_EPISODES = 50000
 GAME_NAME = 'BreakoutDeterministic-v4'
 
 
@@ -39,7 +38,7 @@ def starting_situation():
 env = gym.make(GAME_NAME)
 agent = DQNAgent()
 
-for _ in range(NB_EPISODES):
+for _ in range(agent.nb_episodes):
     done, terminal = False, False
     score, lives = starting_situation()
     observation = env.reset()
