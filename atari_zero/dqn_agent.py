@@ -27,6 +27,10 @@ class DQNAgent:
 
         self.build_atari_model()
 
+        self.target_model = keras.models.clone_model(self.model)
+        self.update_target_model()
+        self.target_update_rate = 10000
+
     def build_atari_model(self):
         frames_input = keras.layers.Input(self.state_size, name='frames')
         actions_input = keras.layers.Input((self.action_size, ), name='mask')
@@ -55,10 +59,13 @@ class DQNAgent:
         )
         self.model.compile(self.optimizer, loss='mse')
 
+    def update_target_model(self):
+        self.target_model.set_weights(self.model.get_weights())
+
     def fit_single_batch(self, gamma, actions, rewards,
                          start_states, next_states, is_terminal):
         # Predict Q values of the next states
-        next_Q_values = self.model.predict(
+        next_Q_values = self.target_model.predict(
             [next_states, np.ones(actions.shape)]
         )
         next_Q_values[is_terminal] = 0
@@ -108,7 +115,8 @@ class DQNAgent:
             reward.append(mini_batch[i][2])
             terminal.append(mini_batch[i][4])
 
-        target_value = self.target_model.predict(next_history)
+        actions_mask = np.ones((self.batch_size, self.action_size))
+        target_value = self.model.predict([next_history, actions_mask])
 
         for i in range(self.batch_size):
             target[i] = reward[i]

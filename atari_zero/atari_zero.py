@@ -22,6 +22,7 @@ def preprocess_frame(frame):
 def train(game):
     env = gym.make(game.env_name)
     agent = DQNAgent()
+    nb_steps = 0
 
     for _ in range(agent.nb_episodes):
         done, terminal = False, False
@@ -60,12 +61,15 @@ def train(game):
             # Learn
             agent.save_to_memory(history, action, reward, next_history, terminal)
             agent.train_replay()
+            if nb_steps % agent.target_update_rate == 0:
+                agent.update_target_model()
 
             # Prepare for next iteration
             if terminal:
                 terminal = False
             else:
                 history = next_history
+            nb_steps += 1
 
 
 def play(game, model_path):
