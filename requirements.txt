@@ -1,7 +1,6 @@
-gym
 atari_py>=0.1.1
-Pillow
-PyOpenGL
-scikit-image
+gym
 keras
+numpy
+scikit-image
 tensorflow
