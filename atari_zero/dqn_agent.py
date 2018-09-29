@@ -82,12 +82,12 @@ class DQNAgent:
         )
 
     def choose_action(self, history):
-        history = np.float32(history / 255.)
         # epsilon greedy exploration
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         else:
-            q_value = self.model.predict(history)
+            mask = np.ones(self.action_size).reshape(1, self.action_size)
+            q_value = self.model.predict([history, mask])
             return np.argmax(q_value[0])
 
     def save_to_memory(self, history, action, reward, next_history, terminal):
@@ -109,14 +109,14 @@ class DQNAgent:
         target = np.zeros((self.batch_size,))
 
         for i in range(self.batch_size):
-            history[i] = np.float32(mini_batch[i][0] / 255.)
-            next_history[i] = np.float32(mini_batch[i][3] / 255.)
+            history[i] = mini_batch[i][0]
+            next_history[i] = mini_batch[i][3]
             action.append(mini_batch[i][1])
             reward.append(mini_batch[i][2])
             terminal.append(mini_batch[i][4])
 
-        actions_mask = np.ones((self.batch_size, self.action_size))
-        target_value = self.model.predict([next_history, actions_mask])
+        mask = np.ones((self.batch_size, self.action_size))
+        target_value = self.model.predict([next_history, mask])
 
         for i in range(self.batch_size):
             target[i] = reward[i]
