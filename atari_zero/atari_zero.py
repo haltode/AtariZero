@@ -19,12 +19,11 @@ def preprocess_frame(frame):
     return compact_frame
 
 
-def train(game):
-    env = gym.make(game.env_name)
+def train(env, game):
     agent = DQNAgent()
     nb_steps = 0
 
-    for _ in range(agent.nb_episodes):
+    for e in range(agent.nb_episodes):
         done, terminal = False, False
         score, lives = game.start_score, game.start_lives
         observation = env.reset()
@@ -70,11 +69,38 @@ def train(game):
             else:
                 history = next_history
             nb_steps += 1
+        if e % 1000 == 0:
+            agent.model.save_weights("./saved_models/breakout_dqn_weights.h5")
 
 
-def play(game, model_path):
-    print(model_path)
-    pass
+def play(env, game, model_path):
+    agent = DQNAgent(model_path)
+
+    done, score = False, game.start_score
+    observation = env.reset()
+
+    # Initial history
+    state = preprocess_frame(observation)
+    history = np.stack((state, state, state, state), axis=2)
+    history = np.reshape([history], (1, 84, 84, 4))
+
+    while not done:
+        env.render()
+
+        # Play action
+        action = agent.choose_action(history)
+        game_action = game.get_ingame_action(action)
+        observation, reward, done, info = env.step(game_action)
+
+        # Update history
+        next_state = preprocess_frame(observation)
+        next_state = np.reshape([next_state], (1, 84, 84, 1))
+        next_history = np.append(next_state, history[:, :, :, :3], axis=3)
+        history = next_history
+
+        reward = np.clip(reward, -1., 1.)
+        score += reward
+    print("score: ", score)
 
 
 parser = argparse.ArgumentParser()
@@ -85,9 +111,10 @@ parser.add_argument("-p", "--play", type=str, metavar="MODEL_FILE",
 args = parser.parse_args()
 
 game = Breakout()
+env = gym.make(game.env_name)
 if args.train:
-    train(game)
+    train(env, game)
 elif args.play:
-    play(game, args.play)
+    play(env, game, args.play)
 else:
     parser.print_help()

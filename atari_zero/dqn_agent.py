@@ -6,7 +6,7 @@ import numpy as np
 
 
 class DQNAgent:
-    def __init__(self):
+    def __init__(self, model_path=None):
         self.state_size = (84, 84, 4)
         self.action_size = 3
         self.nb_episodes = 50000
@@ -26,6 +26,9 @@ class DQNAgent:
         self.no_op_max_steps = 30
 
         self.build_atari_model()
+        self.is_training = model_path is None
+        if not self.is_training:
+            self.model.load_weights(model_path)
 
         self.target_model = keras.models.clone_model(self.model)
         self.update_target_model()
@@ -83,7 +86,7 @@ class DQNAgent:
 
     def choose_action(self, history):
         # epsilon greedy exploration
-        if np.random.rand() <= self.epsilon:
+        if np.random.rand() <= self.epsilon and self.is_training:
             return random.randrange(self.action_size)
         else:
             mask = np.ones(self.action_size).reshape(1, self.action_size)
