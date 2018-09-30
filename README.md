@@ -1,5 +1,17 @@
 # AtariZero
 
+## Dependencies
+
+AtariZero is using:
+
+- [**OpenAI Gym**](https://gym.openai.com/): Atari gaming environment.
+- [**Keras**](https://keras.io/), [**TensorFlow**](https://www.tensorflow.org/):
+    AI's main algorithms.
+- [**NumPy**](http://www.numpy.org/): scientific computing.
+- [**scikit-image**](https://scikit-image.org/): image processing.
+
+## Resources
+
 - [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
 - [Frame Skipping and Pre-Processing for Deep Q-Networks on Atari 2600 Games](https://danieltakeshi.github.io/2016/11/25/frame-skipping-and-preprocessing-for-deep-q-networks-on-atari-2600-games/)
 - [Theano-based implementation of Deep Q-learning](https://github.com/spragunr/deep_q_rl)
