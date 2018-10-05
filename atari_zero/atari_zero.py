@@ -76,8 +76,10 @@ def train(env, game):
             else:
                 history = next_history
             nb_steps += 1
+
         if episode % 1000 == 0:
-            agent.model.save_weights("./saved_models/breakout_dqn_weights.h5")
+            output_file = os.path.join("saved_models", "breakout_dqn_weights.h5")
+            agent.model.save_weights(output_file)
 
         # Output log into TensorBoard
         score_summary = tf.Summary(
