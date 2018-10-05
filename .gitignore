@@ -1,5 +1,5 @@
-# AtariZero models
-saved_models/
+# AtariZero logs
+log/
 
 # Python related
 __pycache__/
