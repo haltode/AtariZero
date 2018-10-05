@@ -1,10 +1,13 @@
 import argparse
+import datetime
+import os
 import random
 
 import gym
 import numpy as np
 import skimage.color
 import skimage.transform
+import tensorflow as tf
 
 from atari_games import Breakout
 from dqn_agent import DQNAgent
@@ -23,7 +26,11 @@ def train(env, game):
     agent = DQNAgent()
     nb_steps = 0
 
-    for e in range(agent.nb_episodes):
+    current_date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    log_dir = os.path.join("log", current_date)
+    writer = tf.summary.FileWriter(log_dir, tf.get_default_graph())
+
+    for episode in range(agent.nb_episodes):
         done, terminal = False, False
         score, lives = game.start_score, game.start_lives
         observation = env.reset()
@@ -69,8 +76,15 @@ def train(env, game):
             else:
                 history = next_history
             nb_steps += 1
-        if e % 1000 == 0:
+        if episode % 1000 == 0:
             agent.model.save_weights("./saved_models/breakout_dqn_weights.h5")
+
+        # Output log into TensorBoard
+        score_summary = tf.Summary(
+            value=[tf.Summary.Value(tag="score", simple_value=score)])
+        writer.add_summary(score_summary, episode)
+
+    writer.close()
 
 
 def play(env, game, model_path):
