@@ -25,10 +25,11 @@ class DQNAgent:
         self.replay_start_size = 50000
         self.no_op_max_steps = 30
 
-        self.build_atari_model()
         self.is_training = model_path is None
-        if not self.is_training:
-            self.model.load_weights(model_path)
+        if self.is_training:
+            self.build_atari_model()
+        else:
+            self.model = keras.models.load_model(model_path)
 
         self.target_model = keras.models.clone_model(self.model)
         self.update_target_model()

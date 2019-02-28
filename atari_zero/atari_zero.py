@@ -23,7 +23,7 @@ def preprocess_frame(frame):
     return compact_frame
 
 
-def train(env, game):
+def train(env, game, model_path):
     agent = DQNAgent()
     nb_steps = 0
 
@@ -78,15 +78,15 @@ def train(env, game):
                 history = next_history
             nb_steps += 1
 
-        if episode % 1000 == 0:
-            output_file = os.path.join("saved_models", "breakout_dqn_weights.h5")
-            agent.model.save_weights(output_file)
+        if episode % 100 == 0:
+            agent.model.save(model_path)
 
         # Output log into TensorBoard
         score_summary = tf.Summary(
             value=[tf.Summary.Value(tag="score", simple_value=score)])
         writer.add_summary(score_summary, episode)
 
+    agent.model.save(model_path)
     writer.close()
 
 
@@ -122,7 +122,7 @@ def play(env, game, model_path):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--train", action="store_true",
+parser.add_argument("-t", "--train", type=str, metavar="MODEL_FILE",
                     help="train the agent to play the game")
 parser.add_argument("-p", "--play", type=str, metavar="MODEL_FILE",
                     help="load agent model file to play the game")
@@ -131,7 +131,7 @@ args = parser.parse_args()
 game = Breakout()
 env = gym.make(game.env_name)
 if args.train:
-    train(env, game)
+    train(env, game, args.train)
 elif args.play:
     play(env, game, args.play)
 else:
