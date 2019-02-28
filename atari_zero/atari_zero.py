@@ -34,6 +34,7 @@ def train(env, game, model_path):
     for episode in range(agent.nb_episodes):
         done, terminal = False, False
         score, lives = game.start_score, game.start_lives
+        loss = 0.
         observation = env.reset()
 
         # To avoid sub-optimal, start the episode by waiting for a few steps
@@ -63,11 +64,13 @@ def train(env, game, model_path):
                 lives = info['ale.lives']
 
             reward = np.clip(reward, -1., 1.)
-            score += reward
 
             # Learn
             agent.save_to_memory(history, action, reward, next_history, terminal)
-            agent.train_replay()
+
+            score += reward
+            loss += agent.train_replay()
+
             if nb_steps % agent.target_update_rate == 0:
                 agent.update_target_model()
 
@@ -78,12 +81,16 @@ def train(env, game, model_path):
                 history = next_history
             nb_steps += 1
 
+        print("done episode {}: loss {}, score {}.".format(episode, loss, score))
         if episode % 100 == 0:
             agent.model.save(model_path)
 
         # Output log into TensorBoard
+        loss_summary = tf.Summary(
+            value=[tf.Summary.Value(tag="loss", simple_value=loss)])
         score_summary = tf.Summary(
             value=[tf.Summary.Value(tag="score", simple_value=score)])
+        writer.add_summary(loss_summary, episode)
         writer.add_summary(score_summary, episode)
 
     agent.model.save(model_path)

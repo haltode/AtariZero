@@ -99,7 +99,7 @@ class DQNAgent:
 
     def train_replay(self):
         if len(self.memory) < self.replay_start_size:
-            return
+            return 0
         if self.epsilon > self.final_epsilon:
             self.epsilon -= self.epsilon_decay
 
@@ -130,7 +130,10 @@ class DQNAgent:
         action_one_hot = np.eye(self.action_size)[np.array(action).reshape(-1)]
         training_data = [history, action_one_hot]
         target_data = action_one_hot * target[:, None]
-        self.model.fit(
-            training_data, target_data, epochs=1,
+        hist = self.model.fit(
+            training_data, target_data,
             batch_size=self.batch_size, verbose=0
         )
+
+        loss = hist.history['loss'][0]
+        return loss
