@@ -2,6 +2,7 @@ import argparse
 import datetime
 import os
 import random
+import time
 
 import gym
 import numpy as np
@@ -102,6 +103,7 @@ def play(env, game, model_path):
 
     while not done:
         env.render()
+        time.sleep(0.05)
 
         # Play action
         action = agent.choose_action(history)
