@@ -16,7 +16,7 @@ from dqn_agent import DQNAgent
 
 def preprocess_frame(frame):
     gray_frame = skimage.color.rgb2gray(frame)
-    resized_frame = skimage.transform.resize(gray_frame, [84, 84])
+    resized_frame = skimage.transform.resize(gray_frame, [84, 84], mode='constant')
     # Store on smallest type possible (uint8) because replay experience will
     # take huge amount of memory, hence using float is very costly
     compact_frame = np.uint8(resized_frame * 255)
