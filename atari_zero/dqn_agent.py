@@ -9,18 +9,18 @@ class DQNAgent:
     def __init__(self, model_path=None):
         self.state_size = (84, 84, 4)
         self.action_size = 3
-        self.nb_episodes = 50000
+        self.nb_episodes = 15000
 
         self.init_epsilon = 1.0
-        self.final_epsilon = 0.1
+        self.final_epsilon = 0.02
         self.nb_exploration_steps = 1000000
         self.epsilon_decay = ((self.init_epsilon - self.final_epsilon)
                               / self.nb_exploration_steps)
 
         self.epsilon = self.init_epsilon
 
-        self.memory = collections.deque(maxlen=400000)
-        self.batch_size = 32
+        self.memory = collections.deque(maxlen=100000)
+        self.batch_size = 64
         self.discount_rate = 0.99
         self.replay_start_size = 50000
         self.no_op_max_steps = 30
@@ -41,16 +41,16 @@ class DQNAgent:
 
         normalized = keras.layers.Lambda(lambda x: x / 255.)(frames_input)
 
-        layer1 = keras.layers.convolutional.Conv2D(
-            16, (8, 8), strides=(4, 4), activation='relu'
-        )(normalized)
-        layer2 = keras.layers.convolutional.Conv2D(
-            32, (4, 4), strides=(2, 2), activation='relu'
-        )(layer1)
-        flat_layer2 = keras.layers.core.Flatten()(layer2)
-        layer3 = keras.layers.Dense(256, activation='relu')(flat_layer2)
+        layer1 = keras.layers.Conv2D(
+            filters=32, kernel_size=8, strides=4, activation='relu')(normalized)
+        layer2 = keras.layers.Conv2D(
+            filters=64, kernel_size=4, strides=2, activation='relu')(layer1)
+        layer3 = keras.layers.Conv2D(
+            filters=64, kernel_size=3, strides=1, activation='relu')(layer2)
+        flat_layer3 = keras.layers.Flatten()(layer3)
+        layer4 = keras.layers.Dense(512, activation='relu')(flat_layer3)
 
-        output = keras.layers.Dense(self.action_size)(layer3)
+        output = keras.layers.Dense(self.action_size)(layer4)
         filtered_output = keras.layers.Multiply(name="Q_values")(
             [output, actions_input]
         )
@@ -58,10 +58,10 @@ class DQNAgent:
         self.model = keras.models.Model(
             inputs=[frames_input, actions_input], outputs=filtered_output
         )
-        self.optimizer = keras.optimizers.RMSprop(
-            lr=0.00025, rho=0.95, epsilon=0.01
+        self.optimizer = keras.optimizers.Adam(
+            lr=0.0001, clipnorm=0.1
         )
-        self.model.compile(self.optimizer, loss='mse')
+        self.model.compile(self.optimizer, loss='mae')
 
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
@@ -81,7 +81,7 @@ class DQNAgent:
         training_data = [start_states, actions]
         target_data = actions * Q_values[:, None]
         self.model.fit(
-            training_data, target_data, epochs=1,
+            training_data, target_data,
             batch_size=len(start_states), verbose=0
         )
 
