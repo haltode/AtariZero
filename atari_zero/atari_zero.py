@@ -10,7 +10,7 @@ import skimage.color
 import skimage.transform
 import tensorflow as tf
 
-from atari_games import Breakout
+from atari_games import Breakout, Pong
 from dqn_agent import DQNAgent
 
 
@@ -21,6 +21,10 @@ def preprocess_frame(frame):
     # take huge amount of memory, hence using float is very costly
     compact_frame = np.uint8(resized_frame * 255)
     return compact_frame
+
+
+def get_ingame_action(action):
+    return action + 1
 
 
 def train(env, game, model_path):
@@ -50,7 +54,7 @@ def train(env, game, model_path):
         while not done:
             # Play action
             action = agent.choose_action(history)
-            game_action = game.get_ingame_action(action)
+            game_action = get_ingame_action(action)
             observation, reward, done, info = env.step(game_action)
 
             # Update history
@@ -114,7 +118,7 @@ def play(env, game, model_path):
 
         # Play action
         action = agent.choose_action(history)
-        game_action = game.get_ingame_action(action)
+        game_action = get_ingame_action(action)
         observation, reward, done, info = env.step(game_action)
 
         # Update history
